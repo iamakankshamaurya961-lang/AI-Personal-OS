@@ -4,9 +4,10 @@ from backend.main import app
 client = TestClient(app)
 
 
-def test_app_loads():
+def test_home():
     response = client.get("/")
-    assert response.status_code in (200, 404)
+    assert response.status_code == 200
+    assert response.json()["message"] == "AI Personal OS Backend is running!"
 
 
 def test_openapi_available():
