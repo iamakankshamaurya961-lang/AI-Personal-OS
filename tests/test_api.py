@@ -13,3 +13,9 @@ def test_home():
 def test_openapi_available():
     response = client.get("/openapi.json")
     assert response.status_code == 200
+
+
+def test_tasks_endpoint():
+    response = client.get("/tasks")
+    assert response.status_code == 200
+    assert isinstance(response.json(), list)
