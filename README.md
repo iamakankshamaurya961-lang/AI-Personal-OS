@@ -13,7 +13,25 @@
 * 🔔 **Notifications** — task and assignment alerts with browser notifications
 * 🎤 **Voice** — speech-to-text and text-to-speech support
 * 🔎 **Search** — search across application data
+## 📸 Application Preview
 
+### Dashboard
+![Dashboard](docs/screenshots/dashboard.png)
+
+### AI Assistant
+![AI Assistant](docs/screenshots/chat.png)
+
+### Assignments
+![Assignments](docs/screenshots/assignments.png)
+
+### Tasks
+![Tasks](docs/screenshots/tasks.png)
+
+### Calendar
+![Calendar](docs/screenshots/calendar.png)
+
+### Gmail Integration
+![Gmail](docs/screenshots/gmail.png)
 ## 🏗️ Architecture
 
 ```text
