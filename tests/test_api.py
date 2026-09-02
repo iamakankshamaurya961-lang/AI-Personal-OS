@@ -19,3 +19,9 @@ def test_tasks_endpoint():
     response = client.get("/tasks")
     assert response.status_code == 200
     assert isinstance(response.json(), list)
+
+
+def test_assignments_endpoint():
+    response = client.get("/assignments")
+    assert response.status_code == 200
+    assert isinstance(response.json(), list)
