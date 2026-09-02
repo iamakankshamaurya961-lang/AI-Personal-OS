@@ -31,3 +31,9 @@ def test_timetable_endpoint():
     response = client.get("/timetable")
     assert response.status_code == 200
     assert isinstance(response.json(), list)
+
+
+def test_calendar_endpoint():
+    response = client.get("/calendar")
+    assert response.status_code == 200
+    assert isinstance(response.json(), list)
