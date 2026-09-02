@@ -296,10 +296,6 @@ def get_memory():
     return {
         "memory": notes
     }
-@app.get("/profile")
-def profile():
-
-    return get_profile()
 
 
 @app.post("/profile")
