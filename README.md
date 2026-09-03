@@ -22,7 +22,7 @@
 ![AI Assistant](docs/screenshots/chat.png)
 
 ### Assignments
-![Assignments](docs/screenshots/assignments.png)
+![Assignments](docs/screenshots/assignment.png)
 
 ### Tasks
 ![Tasks](docs/screenshots/tasks.png)
@@ -64,6 +64,14 @@
 **Database:** SQLite
 **Integrations:** Gmail API, Google Calendar API
 **Version Control:** Git, GitHub
+
+## 🧪 Testing
+
+The backend includes automated API tests covering the main application endpoints.
+
+- 8 API tests passing
+- Tests run with `pytest`
+- GitHub Actions automatically runs tests on every push and pull request
 
 ## 📂 Project Structure
 
@@ -132,7 +140,6 @@ Sensitive credentials, environment files, databases, and local runtime data are 
 * Better RAG retrieval and evaluation
 * Automated scheduling and prioritization
 * Docker deployment
-* Automated testing
 * Production deployment
 
 ## 👩‍💻 Author
