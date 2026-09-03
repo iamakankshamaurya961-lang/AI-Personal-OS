@@ -125,7 +125,15 @@ ollama serve
 uvicorn backend.main:app --reload
 ```
 
-Then open the frontend locally.
+### 5. Start the Frontend
+
+In a new terminal:
+
+```bash
+python3 -m http.server 5500 --directory frontend
+```
+
+Then open `http://localhost:5500` in your browser.
 
 ## 🔐 Security
 
