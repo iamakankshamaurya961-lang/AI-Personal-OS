@@ -1,12 +1,19 @@
 .env
+
 venv/
+
 __pycache__/
+
 *.pyc
+
 .DS_Store
+
 *.db
+
 chroma_db/
 
 backend/credentials/*.json
+
 frontend/tempCodeRunnerFile.js
-backend/uploads/
+
 backend/uploads/
