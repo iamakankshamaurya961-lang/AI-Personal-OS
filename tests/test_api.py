@@ -33,9 +33,18 @@ def test_timetable_endpoint():
     assert isinstance(response.json(), list)
 
 
-def test_calendar_endpoint():
+
+
+def test_calendar_endpoint(monkeypatch):
+    monkeypatch.setattr(
+        "backend.main.get_calendar_events",
+        lambda: []
+    )
+
     response = client.get("/calendar")
+
     assert response.status_code == 200
+    assert response.json() == []
     assert isinstance(response.json(), list)
 
 
