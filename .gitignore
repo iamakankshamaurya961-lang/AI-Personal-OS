@@ -9,3 +9,4 @@ chroma_db/
 backend/credentials/*.json
 frontend/tempCodeRunnerFile.js
 backend/uploads/
+backend/uploads/
