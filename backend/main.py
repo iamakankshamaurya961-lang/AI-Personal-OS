@@ -8,10 +8,6 @@ from backend.services.gmail_reader import (
 )
 
 
-from backend.services.gmail_reader import get_email
-
-
-
 from backend.services.gmail_service import get_google_flow, send_reply
 from fastapi.responses import RedirectResponse
 from backend.services.profile_service import (

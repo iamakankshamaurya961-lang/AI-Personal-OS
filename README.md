@@ -69,7 +69,7 @@
 
 The backend includes automated API tests covering the main application endpoints.
 
-- 8 API tests passing
+- Automated API tests    covering core application endpoints
 - Tests run with `pytest`
 - GitHub Actions automatically runs tests on every push and pull request
 
