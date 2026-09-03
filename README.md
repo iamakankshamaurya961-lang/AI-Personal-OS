@@ -22,7 +22,7 @@
 ![AI Assistant](docs/screenshots/chat.png)
 
 ### Assignments
-![Assignments](docs/screenshots/assignment.png)
+![Assignments](docs/screenshots/assignments.png)
 
 ### Tasks
 ![Tasks](docs/screenshots/tasks.png)
