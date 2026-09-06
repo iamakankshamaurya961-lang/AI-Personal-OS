@@ -236,23 +236,13 @@ def create_event(data: dict):
     print("RECEIVED FROM FRONTEND:")
     print(data)
 
-    event_date = data.get("event_date")
-    event_time = data.get("event_time")
+    start_datetime = data.get("start_datetime")
+    end_datetime = data.get("end_datetime")
 
-    if not event_date or not event_time:
+    if not start_datetime or not end_datetime:
         return {
-            "message": "Date and time are required."
+            "message": "Start and end date/time are required."
         }
-
-    start_datetime = f"{event_date}T{event_time}:00+05:30"
-
-    from datetime import datetime, timedelta
-
-    start = datetime.fromisoformat(start_datetime)
-
-    end = start + timedelta(hours=1)
-
-    end_datetime = end.isoformat()
 
     print("START:", start_datetime)
     print("END:", end_datetime)
