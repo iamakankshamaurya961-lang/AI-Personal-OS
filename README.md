@@ -57,13 +57,13 @@
 
 ## 🛠️ Tech Stack
 
-**Frontend:** HTML, CSS, JavaScript
-**Backend:** Python, FastAPI
-**AI:** Ollama
-**RAG / Vector DB:** Chroma
-**Database:** SQLite
-**Integrations:** Gmail API, Google Calendar API
-**Version Control:** Git, GitHub
+- **Frontend:** HTML, CSS, JavaScript
+- **Backend:** Python, FastAPI
+- **AI:** Ollama, Local LLM
+- **RAG / Vector Database:** ChromaDB
+- **Database:** SQLite
+- **Integrations:** Gmail API, Google Calendar API
+- **Version Control:** Git, GitHub
 
 ## 🧪 Testing
 
