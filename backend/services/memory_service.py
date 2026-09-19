@@ -7,67 +7,65 @@ from backend.vectorstore.chroma_db import (
 
 def save_message(role, message):
     conn = get_connection()
-    cursor = conn.cursor()
+    try:
+        cursor = conn.cursor()
 
-    cursor.execute(
-        "INSERT INTO messages(role, message) VALUES (?, ?)",
-        (role, message)
-    )
+        cursor.execute(
+            "INSERT INTO messages(role, message) VALUES (?, ?)",
+            (role, message)
+        )
 
-    conn.commit()
-    conn.close()
+        conn.commit()
+    finally:
+        conn.close()
 
 
 def load_messages(limit=20):
     conn = get_connection()
-    cursor = conn.cursor()
+    try:
+        cursor = conn.cursor()
 
-    cursor.execute(
-        """
-        SELECT role, message
-        FROM messages
-        ORDER BY id ASC
-        LIMIT ?
-        """,
-        (limit,)
-    )
+        cursor.execute(
+            "SELECT role, message FROM (SELECT id, role, message FROM messages ORDER BY id DESC LIMIT ?) ORDER BY id ASC",
+            (limit,)
+        )
 
-    messages = cursor.fetchall()
-
-    conn.close()
-
-    return messages
+        messages = cursor.fetchall()
+        return messages
+    finally:
+        conn.close()
 
 
 def load_notes():
     conn = get_connection()
-    cursor = conn.cursor()
+    try:
+        cursor = conn.cursor()
 
-    cursor.execute(
-        "SELECT content FROM notes"
-    )
+        cursor.execute(
+            "SELECT content FROM notes"
+        )
 
-    notes = cursor.fetchall()
-
-    conn.close()
-
-    return notes
+        return [row[0] for row in cursor.fetchall()]
+    finally:
+        conn.close()
 
 
 def save_note(content):
     conn = get_connection()
-    cursor = conn.cursor()
+    try:
+        cursor = conn.cursor()
 
-    cursor.execute(
-        """
-        INSERT INTO notes(content, created_at)
-        VALUES (?, datetime('now'))
-        """,
-        (content,)
-    )
+        cursor.execute(
+            """
+            INSERT INTO notes(content, created_at)
+            VALUES (?, datetime('now'))
+            """,
+            (content,)
+        )
 
-    conn.commit()
-    conn.close()
+        conn.commit()
+    finally:
+        conn.close()
 
     # Store in vector database
     add_document(content)

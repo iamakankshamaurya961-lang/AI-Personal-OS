@@ -1,8 +1,9 @@
+import os
 import requests
 
 
-OLLAMA_URL = "http://localhost:11434/api/generate"
-MODEL = "llama3"
+OLLAMA_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434") + "/api/generate"
+MODEL = os.getenv("OLLAMA_MODEL", "llama3")
 
 def should_save_memory(message):
 
@@ -69,28 +70,35 @@ Message:
 {message}
 """
 
-    response = requests.post(
-        OLLAMA_URL,
-        json={
-            "model": MODEL,
-            "prompt": prompt,
-            "stream": False
-        }
-    )
-
-    data = response.json()
-
-    return data["response"].strip().upper().startswith("YES")
+    try:
+        response = requests.post(
+            OLLAMA_URL,
+            json={
+                "model": MODEL,
+                "prompt": prompt,
+                "stream": False
+            },
+            timeout=60
+        )
+        response.raise_for_status()
+        data = response.json()
+        return data["response"].strip().upper().startswith("YES")
+    except requests.RequestException:
+        return False
 
 def ask_llama(prompt):
 
-    response = requests.post(
-        OLLAMA_URL,
-        json={
-            "model": MODEL,
-            "prompt": prompt,
-            "stream": False
-        }
-    )
-
-    return response.json()
+    try:
+        response = requests.post(
+            OLLAMA_URL,
+            json={
+                "model": MODEL,
+                "prompt": prompt,
+                "stream": False
+            },
+            timeout=60
+        )
+        response.raise_for_status()
+        return response.json()
+    except requests.RequestException as e:
+        return {"response": f"Error communicating with AI service: {str(e)}"}

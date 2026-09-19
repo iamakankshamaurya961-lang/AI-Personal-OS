@@ -1,19 +1,53 @@
-.env
-
-venv/
-
+# Python
 __pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
 
-*.pyc
+# Virtual environments
+venv/
+env/
+.venv/
 
+# Testing & Coverage
+.pytest_cache/
+.coverage
+htmlcov/
+coverage.xml
+
+# Type checking & Linting
+.mypy_cache/
+.ruff_cache/
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
 .DS_Store
+Thumbs.db
 
+# Environment & Secrets
+.env
+.env.local
+backend/credentials/*.json
+backend/credentials/*.pem
+
+# Database
 *.db
-
 chroma_db/
 
-backend/credentials/*.json
+# Uploads
+backend/uploads/*
+!backend/uploads/.gitkeep
 
+# Logs
+*.log
+
+# Frontend temp
 frontend/tempCodeRunnerFile.js
-
-backend/uploads/

@@ -1,125 +1,115 @@
-# AI Personal OS
+# 🧠 AI Personal OS
 
-> **A full-stack AI-powered personal workspace that brings tasks, assignments, calendar, email, documents, memory, and AI assistance into one system.**
+[![CI Pipeline](https://github.com/iamakankshamaurya961-lang/AI-Personal-OS/actions/workflows/tests.yml/badge.svg)](https://github.com/iamakankshamaurya961-lang/AI-Personal-OS/actions)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://python.org)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![FastAPI](https://img.shields.io/badge/FastAPI-009688.svg?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
+[![Ollama](https://img.shields.io/badge/Ollama-LLM-black.svg)](https://ollama.com)
 
-## 🚀 Features
+> **A full-stack AI-powered personal workspace that brings tasks, assignments, calendar, email, documents, memory, and AI assistance into one unified system — powered by local LLM inference.**
 
-* 🤖 **AI Assistant** — local AI inference using Ollama
-* 🧠 **Personal Memory** — persistent memory and contextual responses
-* 📚 **RAG** — upload and query documents using Chroma vector storage
-* 📧 **Gmail** — read emails and generate/send AI-assisted replies
-* 📅 **Google Calendar** — create, view, and delete events
-* 📝 **Productivity** — tasks, assignments, timetable, notes, and dashboard
-* 🔔 **Notifications** — task and assignment alerts with browser notifications
-* 🎤 **Voice** — speech-to-text and text-to-speech support
-* 🔎 **Search** — search across application data
-## 📸 Application Preview
+---
 
-### Dashboard
-![Dashboard](docs/screenshots/dashboard.png)
-
-### AI Assistant
-![AI Assistant](docs/screenshots/chat.png)
-
-### Assignments
-![Assignments](docs/screenshots/assignments.png)
-
-### Tasks
-![Tasks](docs/screenshots/tasks.png)
-
-### Calendar
-![Calendar](docs/screenshots/calendar.png)
-
-### Gmail Integration
-![Gmail](docs/screenshots/gmail.png)
 ## 🏗️ Architecture
 
-```text
-                    AI Personal OS
-                          │
-             ┌────────────┴────────────┐
-             │                         │
-        Frontend                    FastAPI
-      HTML/CSS/JS                  Backend API
-             │                         │
-             └────────────┬────────────┘
-                          │
-       ┌──────────────────┼──────────────────┐
-       │                  │                  │
-    SQLite              Ollama           Chroma
-   Application          Local AI          Vector DB
-      Data                │                RAG
-                          │
-                 ┌────────┴────────┐
-                 │                 │
-              Gmail             Calendar
+```mermaid
+graph TB
+    subgraph Frontend
+        A["Browser UI — HTML/CSS/JS"]
+    end
+
+    subgraph Backend ["FastAPI Backend"]
+        B["REST API Layer"]
+        C["AI Service — Ollama"]
+        D["Context Builder"]
+        E["RAG Pipeline"]
+    end
+
+    subgraph Storage
+        F["SQLite — App Data"]
+        G["ChromaDB — Vector Store"]
+    end
+
+    subgraph External ["External APIs"]
+        H["Gmail API"]
+        I["Google Calendar API"]
+    end
+
+    A -->|HTTP Requests| B
+    B --> C
+    B --> D
+    D --> E
+    C -->|Local LLM| J["Ollama Server"]
+    E --> G
+    B --> F
+    B --> H
+    B --> I
+
+    style C fill:#38bdf8,color:#000
+    style G fill:#c084fc,color:#000
+    style J fill:#fbbf24,color:#000
 ```
 
-## 🛠️ Tech Stack
+### How It Works
 
-- **Frontend:** HTML, CSS, JavaScript
-- **Backend:** Python, FastAPI
-- **AI:** Ollama, Local LLM
-- **RAG / Vector Database:** ChromaDB
-- **Database:** SQLite
-- **Integrations:** Gmail API, Google Calendar API
-- **Version Control:** Git, GitHub
+| Component | Technology | Purpose |
+|---|---|---|
+| **Frontend** | HTML, CSS, JavaScript | Single-page dashboard with real-time UI |
+| **Backend** | Python, FastAPI | REST API server with async request handling |
+| **AI Engine** | Ollama (local LLM) | Private, local AI inference — no cloud API keys needed |
+| **Memory** | ChromaDB (vectors) | Persistent memory via semantic vector embeddings |
+| **RAG Pipeline** | Sentence Transformers | Upload PDFs/DOCX → chunk → embed → semantic search |
+| **Database** | SQLite | Tasks, assignments, timetable, notes, profile |
+| **Integrations** | Google APIs | Gmail read/reply + Calendar create/delete events |
 
-## 🧪 Testing
+---
 
-The backend includes automated API tests covering the main application endpoints.
+## 🌟 Key Features
 
-- Automated API tests    covering core application endpoints
-- Tests run with `pytest`
-- GitHub Actions automatically runs tests on every push and pull request
+- 🤖 **AI Assistant** — Local LLM inference via Ollama with persistent conversational memory
+- 🧠 **Personal Memory** — AI remembers important facts across sessions using vector embeddings
+- 📚 **RAG Document Q&A** — Upload PDFs, DOCX, or TXT files and query them with AI
+- 📧 **Gmail Integration** — Read emails, generate AI-assisted replies, send directly
+- 📅 **Google Calendar** — Create, view, and delete calendar events
+- 📝 **Productivity Suite** — Tasks, assignments, timetable, notes, and a unified dashboard
+- 🔔 **Smart Notifications** — Assignment deadlines, pending tasks, and calendar alerts
+- 🎤 **Voice Input** — Browser-native speech-to-text for hands-free interaction
+- 🔎 **Global Search** — Search across all application data simultaneously
 
-## 📂 Project Structure
+---
 
-```text
-AI-Personal-OS/
-├── backend/
-│   ├── api/
-│   ├── db/
-│   ├── rag/
-│   ├── services/
-│   ├── tasks/
-│   ├── vectorstore/
-│   ├── voice/
-│   └── main.py
-│
-├── frontend/
-│   ├── index.html
-│   ├── script.js
-│   └── style.css
-│
-├── .gitignore
-└── README.md
-```
+## 🚀 Quick Start
 
-## ⚙️ Run Locally
+### Prerequisites
+- Python 3.11+
+- [Ollama](https://ollama.com) installed and running
+- (Optional) Google Cloud project for Gmail/Calendar integration
 
-### 1. Clone
+### 1. Clone & Install
 
 ```bash
 git clone https://github.com/iamakankshamaurya961-lang/AI-Personal-OS.git
 cd AI-Personal-OS
-```
-
-### 2. Backend
-
-```bash
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 3. Start Ollama
+### 2. Start Ollama
 
 ```bash
 ollama serve
+ollama pull llama3
 ```
 
-### 4. Start FastAPI
+### 3. Configure (Optional)
+
+```bash
+cp .env.example .env
+# Edit .env to customize Ollama URL, model, port, timezone
+```
+
+### 4. Start the Backend
 
 ```bash
 uvicorn backend.main:app --reload
@@ -127,28 +117,167 @@ uvicorn backend.main:app --reload
 
 ### 5. Start the Frontend
 
-In a new terminal:
-
 ```bash
 python3 -m http.server 5500 --directory frontend
 ```
 
-Then open `http://localhost:5500` in your browser.
+Open **http://localhost:5500** in your browser! 🎉
+
+---
+
+## 📡 API Reference
+
+| Method | Endpoint | Description |
+|:---|:---|:---|
+| `POST` | `/ask` | Send a question to the AI assistant |
+| `GET` | `/dashboard` | Get aggregated dashboard stats |
+| `GET/POST` | `/tasks` | List / create tasks |
+| `PUT` | `/tasks/{id}/complete` | Mark task as completed |
+| `DELETE` | `/tasks/{id}` | Delete a task |
+| `GET/POST` | `/assignments` | List / create assignments |
+| `PUT` | `/assignments/{id}/complete` | Mark assignment done |
+| `DELETE` | `/assignments/{id}` | Delete an assignment |
+| `GET/POST` | `/timetable` | List / create timetable classes |
+| `DELETE` | `/timetable/{id}` | Delete a class |
+| `GET/POST` | `/calendar` | List / create calendar events |
+| `DELETE` | `/calendar/{id}` | Delete a calendar event |
+| `GET/PUT` | `/profile` | Get / update user profile |
+| `GET/POST` | `/notes` | List / save notes |
+| `POST` | `/upload` | Upload a document for RAG |
+| `GET` | `/notifications` | Get smart notification alerts |
+| `GET` | `/search?query=...` | Global search across all data |
+| `GET` | `/gmail` | List recent Gmail messages |
+| `GET` | `/gmail/{id}` | Get full email details |
+| `POST` | `/gmail/reply` | Generate AI reply to email |
+| `POST` | `/gmail/send-reply` | Send email reply via Gmail |
+| `GET` | `/auth/gmail/login` | Start Gmail OAuth flow |
+
+---
+
+## 📸 Application Preview
+
+| Dashboard | AI Chat |
+|---|---|
+| ![Dashboard](docs/screenshots/dashboard.png) | ![Chat](docs/screenshots/chat.png) |
+
+| Assignments | Tasks |
+|---|---|
+| ![Assignments](docs/screenshots/assignments.png) | ![Tasks](docs/screenshots/tasks.png) |
+
+| Calendar | Gmail |
+|---|---|
+| ![Calendar](docs/screenshots/calendar.png) | ![Gmail](docs/screenshots/gmail.png) |
+
+---
+
+## 📁 Project Structure
+
+```
+AI-Personal-OS/
+├── backend/
+│   ├── calendar/
+│   │   └── calender_manager.py   # Google Calendar API integration
+│   ├── db/
+│   │   ├── database.py           # SQLite schema & connection management
+│   │   └── models.py             # Data models
+│   ├── rag/
+│   │   └── document_loader.py    # PDF, DOCX, TXT file parsers
+│   ├── services/
+│   │   ├── ai_service.py         # Ollama LLM integration
+│   │   ├── assignment_service.py # Assignment CRUD operations
+│   │   ├── context_builder.py    # AI prompt construction with RAG
+│   │   ├── email_ai.py           # AI email summarization & replies
+│   │   ├── gmail_reader.py       # Gmail inbox reader
+│   │   ├── gmail_service.py      # Gmail OAuth & send operations
+│   │   ├── memory_service.py     # Chat history & notes persistence
+│   │   ├── notification_service.py # Smart notification engine
+│   │   ├── profile_service.py    # User profile management
+│   │   ├── rag_service.py        # Document chunking & retrieval
+│   │   ├── task_service.py       # Task CRUD operations
+│   │   └── timetable_service.py  # Timetable management
+│   ├── vectorstore/
+│   │   └── chroma_db.py          # ChromaDB vector store adapter
+│   └── main.py                   # FastAPI application & routes
+├── frontend/
+│   ├── index.html                # Dashboard UI
+│   ├── script.js                 # Frontend application logic
+│   └── style.css                 # Styles & responsive layout
+├── tests/
+│   └── test_api.py               # API integration tests
+├── docs/screenshots/             # Application screenshots
+├── .env.example                  # Environment variable template
+├── .github/workflows/tests.yml   # CI/CD pipeline
+├── .gitignore                    # Git ignore rules
+├── CONTRIBUTING.md               # Contribution guidelines
+├── LICENSE                       # MIT License
+├── requirements.txt              # Production dependencies
+└── requirements-dev.txt          # Development dependencies
+```
+
+---
+
+## 🧪 Testing
+
+```bash
+# Install dev dependencies
+pip install -r requirements-dev.txt
+
+# Run tests
+python -m pytest tests/ -v
+
+# Run with coverage
+python -m pytest tests/ -v --cov=backend --cov-report=term-missing
+```
+
+---
+
+## 🛠️ Tech Stack
+
+| Layer | Technology |
+|---|---|
+| **Frontend** | HTML5, CSS3, JavaScript (ES6+) |
+| **Backend** | Python 3.11+, FastAPI, Uvicorn |
+| **AI/LLM** | Ollama, Llama 3 (local inference) |
+| **RAG** | Sentence Transformers, ChromaDB |
+| **Database** | SQLite (WAL mode) |
+| **Document Processing** | pdfplumber, python-docx |
+| **Integrations** | Gmail API, Google Calendar API |
+| **CI/CD** | GitHub Actions |
+
+---
 
 ## 🔐 Security
 
-Sensitive credentials, environment files, databases, and local runtime data are excluded from version control using `.gitignore`.
+- All credentials excluded from version control via `.gitignore`
+- OAuth tokens stored locally with restricted access
+- File uploads sanitized to prevent path traversal
+- **Never commit API keys, OAuth credentials, or access tokens**
 
-**Never commit API keys, OAuth credentials, or access tokens.**
+---
+
+## 🎯 Interview Talking Points
+
+> *"I built a full-stack AI-powered personal workspace with local LLM inference via Ollama, eliminating cloud API dependency. The system features a RAG pipeline using Sentence Transformers and ChromaDB for document Q&A, persistent conversational memory via vector embeddings, and integrations with Gmail and Google Calendar APIs. The backend uses FastAPI with SQLite (WAL mode) for concurrent access, and includes a smart notification engine that aggregates deadlines across tasks, assignments, and calendar events. The project is tested with pytest and automated via GitHub Actions CI/CD."*
+
+### Key Design Decisions:
+- **Why local LLM (Ollama)?** → Privacy-first, no API costs, works offline
+- **Why ChromaDB for memory?** → Semantic similarity search enables context-aware AI responses
+- **Why RAG?** → Grounds LLM responses in user's actual documents, reducing hallucination
+- **Why separate collections for docs vs memories?** → Prevents document operations from destroying user memories
+- **Why SQLite with WAL?** → Lightweight, zero-config, concurrent read support for web serving
+
+---
 
 ## 🔮 Future Work
 
-* Agentic task planning
-* Improved long-term memory
-* Better RAG retrieval and evaluation
-* Automated scheduling and prioritization
-* Docker deployment
-* Production deployment
+- Agentic task planning with multi-step reasoning
+- Improved long-term memory with importance scoring
+- Better RAG retrieval with re-ranking and evaluation
+- Automated scheduling and prioritization
+- Docker containerized deployment
+- Multi-user authentication support
+
+---
 
 ## 👩‍💻 Author
 
@@ -156,8 +285,14 @@ Sensitive credentials, environment files, databases, and local runtime data are 
 B.Tech — Electronics & Communication Engineering
 IIIT Senapati, Manipur
 
-GitHub: **iamakankshamaurya961-lang**
+GitHub: [iamakankshamaurya961-lang](https://github.com/iamakankshamaurya961-lang)
 
 ---
 
-⭐ If you find the project interesting, consider starring the repository.
+## 📄 License
+
+This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
+
+---
+
+<p align="center">Built with ❤️ by <strong>Akanksha Maurya</strong></p>

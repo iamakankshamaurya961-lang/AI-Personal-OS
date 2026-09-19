@@ -14,13 +14,23 @@ from backend.services.profile_service import (
     get_profile,
     save_profile
 )
-from fastapi import FastAPI, UploadFile, File, Request
+from fastapi import FastAPI, UploadFile, File, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 
 import os
 import sqlite3
 import re
+import logging
+
+SERVER_PORT = int(os.environ.get("SERVER_PORT", "8000"))
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s | %(levelname)-8s | %(name)s | %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
+logger = logging.getLogger("ai-personal-os")
 from backend.db.database import init_db
 from backend.db.database import get_connection
 from backend.services.memory_service import (
@@ -41,10 +51,6 @@ from backend.services.rag_service import ingest_document
 
 from backend.vectorstore.chroma_db import clear_documents
 
-from backend.services.profile_service import (
-    save_profile,
-    get_profile,
-)
 
 from backend.services.timetable_service import (
     add_class,
@@ -64,7 +70,7 @@ from backend.services.task_service import (
     complete_task,
     delete_task,
 )
-from backend.calender.calender_manager import (
+from backend.calendar.calender_manager import (
     get_calendar_events,
     create_calendar_event,
     delete_calendar_event
@@ -233,19 +239,16 @@ def calendar():
 @app.post("/calendar")
 def create_event(data: dict):
 
-    print("RECEIVED FROM FRONTEND:")
-    print(data)
+    logger.info("RECEIVED FROM FRONTEND: %s", data)
 
     start_datetime = data.get("start_datetime")
     end_datetime = data.get("end_datetime")
 
     if not start_datetime or not end_datetime:
-        return {
-            "message": "Start and end date/time are required."
-        }
+        raise HTTPException(status_code=400, detail="Start and end date/time are required.")
 
-    print("START:", start_datetime)
-    print("END:", end_datetime)
+    logger.info("START: %s", start_datetime)
+    logger.info("END: %s", end_datetime)
 
     event = create_calendar_event(
         data.get("event", ""),
@@ -304,7 +307,7 @@ async def update_profile(profile: dict):
 
 
 
-@app.get("/ask")
+@app.post("/ask")
 def ask(question: str):
 
     question_clean = question.strip()
@@ -324,9 +327,7 @@ def ask(question: str):
         task_name = add_match.group(1).strip()
 
         if not task_name:
-            return {
-                "answer": "Please provide a task name."
-            }
+            raise HTTPException(status_code=400, detail="Please provide a task name.")
 
         add_task(task_name)
 
@@ -412,10 +413,10 @@ def ask(question: str):
             "answer": ai_answer
         }
 
-    return {
-        "error": data,
-        "message": "Ollama did not return expected response"
-    }
+    raise HTTPException(
+        status_code=502,
+        detail=f"Ollama did not return expected response: {data}"
+    )
 # DOCUMENT UPLOAD
 # ======================================
 
@@ -423,8 +424,9 @@ def ask(question: str):
 async def upload_document(file: UploadFile = File(...)):
 
     os.makedirs("backend/uploads", exist_ok=True)
-
-    file_path = f"backend/uploads/{file.filename}"
+    
+    safe_filename = os.path.basename(file.filename)
+    file_path = f"backend/uploads/{safe_filename}"
 
     with open(file_path, "wb") as buffer:
         buffer.write(await file.read())
@@ -445,48 +447,51 @@ async def upload_document(file: UploadFile = File(...)):
 def dashboard():
 
     conn = get_connection()
-    cursor = conn.cursor()
+    try:
+        cursor = conn.cursor()
 
-    cursor.execute("SELECT COUNT(*) FROM assignments WHERE status='Pending'")
-    assignments = cursor.fetchone()[0]
+        cursor.execute("SELECT COUNT(*) FROM assignments WHERE status='Pending'")
+        assignments = cursor.fetchone()[0]
 
-    cursor.execute("SELECT COUNT(*) FROM tasks WHERE status='Pending'")
-    tasks = cursor.fetchone()[0]
+        cursor.execute("SELECT COUNT(*) FROM tasks WHERE status='Pending'")
+        tasks = cursor.fetchone()[0]
 
-    cursor.execute("SELECT COUNT(*) FROM notes")
-    memories = cursor.fetchone()[0]
+        cursor.execute("SELECT COUNT(*) FROM notes")
+        memories = cursor.fetchone()[0]
 
-    cursor.execute("SELECT COUNT(*) FROM timetable")
-    classes = cursor.fetchone()[0]
+        cursor.execute("SELECT COUNT(*) FROM timetable")
+        classes = cursor.fetchone()[0]
 
-    cursor.execute("SELECT COUNT(*) FROM calendar_events")
-    events = cursor.fetchone()[0]
+        cursor.execute("SELECT COUNT(*) FROM calendar_events")
+        events = cursor.fetchone()[0]
 
-    cursor.execute("SELECT name FROM profile WHERE id=1")
-    row = cursor.fetchone()
+        cursor.execute("SELECT name FROM profile WHERE id=1")
+        row = cursor.fetchone()
 
-    name = row[0] if row else "User"
+        name = row[0] if row else "User"
 
-    conn.close()
-
-    return {
-        "name": name,
-        "assignments": assignments,
-        "tasks": tasks,
-        "memories": memories,
-        "classes": classes,
-        "events": events
-    }
+        return {
+            "name": name,
+            "assignments": assignments,
+            "tasks": tasks,
+            "memories": memories,
+            "classes": classes,
+            "events": events
+        }
+    finally:
+        conn.close()
 @app.delete("/clear_chat")
 def clear_chat():
 
     conn = get_connection()
-    cursor = conn.cursor()
+    try:
+        cursor = conn.cursor()
 
-    cursor.execute("DELETE FROM messages")
+        cursor.execute("DELETE FROM messages")
 
-    conn.commit()
-    conn.close()
+        conn.commit()
+    finally:
+        conn.close()
 
     return {
         "message":"Chat cleared successfully!"
@@ -506,8 +511,7 @@ def gmail_login():
     oauth_data["code_verifier"] = flow.code_verifier
 
     return RedirectResponse(authorization_url)
-from fastapi import Request
-import os
+
 
 
 
@@ -527,31 +531,21 @@ def gmail_callback(
     # ==============================
 
     if error:
-
-        return {
-            "error": "Google authorization was not completed.",
-            "details": error
-        }
+        raise HTTPException(status_code=400, detail=f"Google authorization was not completed. {error}")
 
     # ==============================
     # VERIFY STATE
     # ==============================
 
     if state != oauth_data.get("state"):
-
-        return {
-            "error": "Invalid OAuth state."
-        }
+        raise HTTPException(status_code=400, detail="Invalid OAuth state.")
 
     # ==============================
     # CHECK CODE
     # ==============================
 
     if not code:
-
-        return {
-            "error": "Authorization code was not received."
-        }
+        raise HTTPException(status_code=400, detail="Authorization code was not received.")
 
     # ==============================
     # RESTORE GOOGLE FLOW
@@ -570,11 +564,7 @@ def gmail_callback(
         flow.fetch_token(code=code)
 
     except Exception as e:
-
-        return {
-            "error": "Failed to connect Google account.",
-            "details": str(e)
-        }
+        raise HTTPException(status_code=400, detail=f"Failed to connect Google account. {str(e)}")
 
     credentials = flow.credentials
 
@@ -611,9 +601,7 @@ def gmail_reply(data: dict):
     body = data.get("body", "")
 
     if not body:
-        return {
-            "error": "Email body is empty"
-        }
+        raise HTTPException(status_code=400, detail="Email body is empty")
 
     reply = generate_email_reply(body)
 
@@ -627,14 +615,10 @@ def gmail_send_reply(data: dict):
     body = data.get("body", "")
 
     if not email_id:
-        return {
-            "error": "Email ID is missing."
-        }
+        raise HTTPException(status_code=400, detail="Email ID is missing.")
 
     if not body:
-        return {
-            "error": "Reply body is empty."
-        }
+        raise HTTPException(status_code=400, detail="Reply body is empty.")
 
     try:
 
@@ -646,10 +630,7 @@ def gmail_send_reply(data: dict):
         return result
 
     except Exception as e:
-
-        return {
-            "error": str(e)
-        }
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.post("/gmail/summarize")
@@ -658,9 +639,7 @@ def gmail_summary(data: dict):
     body = data.get("body", "")
 
     if not body:
-        return {
-            "error": "Email body is empty"
-        }
+        raise HTTPException(status_code=400, detail="Email body is empty")
 
     summary = summarize_email(body)
 
@@ -675,89 +654,90 @@ def notifications():
 def global_search(query: str):
 
     conn = get_connection()
-    conn.row_factory = sqlite3.Row
-    cursor = conn.cursor()
+    try:
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
 
-    results = []
+        results = []
 
-    cursor.execute(
-        "SELECT subject,title,deadline FROM assignments"
-    )
+        cursor.execute(
+            "SELECT subject,title,deadline FROM assignments"
+        )
 
-    for row in cursor.fetchall():
+        for row in cursor.fetchall():
 
-        text = (
-            row["subject"] + " " +
-            row["title"] + " " +
-            row["deadline"]
-        ).lower()
+            text = (
+                row["subject"] + " " +
+                row["title"] + " " +
+                row["deadline"]
+            ).lower()
 
-        if query.lower() in text:
+            if query.lower() in text:
 
-            results.append({
-                "type":"Assignment",
-                "title":row["title"],
-                "subtitle":row["subject"]
-            })
+                results.append({
+                    "type":"Assignment",
+                    "title":row["title"],
+                    "subtitle":row["subject"]
+                })
 
-    cursor.execute(
-        "SELECT task,status FROM tasks"
-    )
+        cursor.execute(
+            "SELECT task,status FROM tasks"
+        )
 
-    for row in cursor.fetchall():
+        for row in cursor.fetchall():
 
-        text = (
-            row["task"] + " " +
-            row["status"]
-        ).lower()
+            text = (
+                row["task"] + " " +
+                row["status"]
+            ).lower()
 
-        if query.lower() in text:
+            if query.lower() in text:
 
-            results.append({
-                "type":"Task",
-                "title":row["task"],
-                "subtitle":row["status"]
-            })
+                results.append({
+                    "type":"Task",
+                    "title":row["task"],
+                    "subtitle":row["status"]
+                })
 
-    cursor.execute(
-        "SELECT event,event_date FROM calendar_events"
-    )
+        cursor.execute(
+            "SELECT event,event_date FROM calendar_events"
+        )
 
-    for row in cursor.fetchall():
+        for row in cursor.fetchall():
 
-        text = (
-            row["event"] + " " +
-            row["event_date"]
-        ).lower()
+            text = (
+                row["event"] + " " +
+                row["event_date"]
+            ).lower()
 
-        if query.lower() in text:
+            if query.lower() in text:
 
-            results.append({
-                "type":"Event",
-                "title":row["event"],
-                "subtitle":row["event_date"]
-            })
+                results.append({
+                    "type":"Event",
+                    "title":row["event"],
+                    "subtitle":row["event_date"]
+                })
 
-    cursor.execute(
-        "SELECT subject,day,start_time FROM timetable"
-    )
+        cursor.execute(
+            "SELECT subject,day,start_time FROM timetable"
+        )
 
-    for row in cursor.fetchall():
+        for row in cursor.fetchall():
 
-        text = (
-            row["subject"] + " " +
-            row["day"] + " " +
-            row["start_time"]
-        ).lower()
+            text = (
+                row["subject"] + " " +
+                row["day"] + " " +
+                row["start_time"]
+            ).lower()
 
-        if query.lower() in text:
+            if query.lower() in text:
 
-            results.append({
-                "type":"Class",
-                "title":row["subject"],
-                "subtitle":row["day"]
-            })
+                results.append({
+                    "type":"Class",
+                    "title":row["subject"],
+                    "subtitle":row["day"]
+                })
 
-    conn.close()
-
-    return results
+        return results
+    finally:
+        conn.close()

@@ -1,97 +1,73 @@
 import chromadb
 from sentence_transformers import SentenceTransformer
-import re
+import uuid
+import logging
+
+logger = logging.getLogger(__name__)
 
 client = chromadb.PersistentClient(path="chroma_db")
 
-collection = client.get_or_create_collection(
-    name="documents"
-)
+doc_collection = client.get_or_create_collection(name="documents")
+mem_collection = client.get_or_create_collection(name="memories")
 
 model = SentenceTransformer("all-MiniLM-L6-v2")
 
 
 def clear_documents():
-    global collection
-
+    """Clears only the documents collection, preserving user memories."""
+    global doc_collection
     try:
-        client.delete_collection("documents")
-    except:
+        client.delete_collection(name="documents")
+    except Exception:
         pass
-
-    collection = client.get_or_create_collection(
-        name="documents"
-    )
+    doc_collection = client.get_or_create_collection(name="documents")
 
 
 def add_document(text):
-
     embedding = model.encode(text).tolist()
-
-    collection.add(
-        ids=[str(collection.count() + 1)],
+    doc_collection.add(
+        ids=[str(uuid.uuid4())],
         documents=[text],
         embeddings=[embedding]
     )
 
 
 def add_memory(text):
-    add_document(text)
+    embedding = model.encode(text).tolist()
+    mem_collection.add(
+        ids=[str(uuid.uuid4())],
+        documents=[text],
+        embeddings=[embedding]
+    )
 
 
 def search_memory(query):
-    return search_documents(query)
+    embedding = model.encode(query).tolist()
+    results = mem_collection.query(
+        query_embeddings=[embedding],
+        n_results=10,
+        include=["documents", "distances"]
+    )
+    if not results or not results.get("documents") or len(results["documents"][0]) == 0:
+        return []
+    distance = results["distances"][0][0]
+    logger.info("Distance: %s", distance)
+    if distance > 1.2:
+        return []
+    return results["documents"][0]
 
 
 def search_documents(query, n_results=10):
-
-    # ---------- Detect semester ----------
-    semester = None
-
-    match = re.search(
-        r"semester\s*([ivx0-9]+)",
-        query,
-        re.IGNORECASE
-    )
-
-    if match:
-        semester = match.group(1).upper()
-
-    # ---------- If asking semester, return exact semester ----------
-    if semester:
-
-        docs = collection.get()["documents"]
-
-        exact = []
-
-        for doc in docs:
-
-            if f"SEMESTER -{semester}" in doc.upper():
-                exact.append(doc)
-
-        if exact:
-            return exact
-
-    # ---------- Semantic Search ----------
     embedding = model.encode(query).tolist()
-
-    results = collection.query(
+    results = doc_collection.query(
         query_embeddings=[embedding],
         n_results=n_results,
         include=["documents", "distances"]
     )
-
-    # No documents
-    if len(results["documents"][0]) == 0:
+    if not results or not results.get("documents") or len(results["documents"][0]) == 0:
         return []
-
-    # Distance of best match
     distance = results["distances"][0][0]
-
-    print("Distance:", distance)
-
-    # Ignore unrelated matches
+    logger.info("Distance: %s", distance)
     if distance > 1.2:
         return []
-
     return results["documents"][0]

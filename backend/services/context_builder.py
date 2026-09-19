@@ -24,6 +24,8 @@ def build_prompt(notes, history, question, tasks):
     else:
         task_text = "No tasks found."
 
+    notes_section = '\n'.join(f'- {note}' for note in notes) if notes else 'No saved memories.'
+
     # ---------------- NORMAL CHAT ----------------
 
     if (
@@ -47,6 +49,9 @@ IMPORTANT:
 REAL TASK LIST:
 {task_text}
 
+USER'S SAVED MEMORIES AND NOTES:
+{notes_section}
+
 Conversation History:
 {conversation}
 
@@ -69,6 +74,9 @@ If the document is unrelated, ignore it completely.
 
 REAL TASK LIST:
 {task_text}
+
+USER'S SAVED MEMORIES AND NOTES:
+{notes_section}
 
 Document:
 {relevant_context}

@@ -4,71 +4,74 @@ from backend.db.database import get_connection
 def get_profile():
 
     conn = get_connection()
-    cursor = conn.cursor()
+    try:
+        cursor = conn.cursor()
 
-    cursor.execute(
-        "SELECT * FROM profile WHERE id=1"
-    )
+        cursor.execute(
+            "SELECT * FROM profile WHERE id=1"
+        )
 
-    row = cursor.fetchone()
+        row = cursor.fetchone()
 
-    conn.close()
+        if row is None:
 
-    if row is None:
+            return {
+                "name": "",
+                "email": "",
+                "phone": "",
+                "college": "",
+                "course": "",
+                "semester": "",
+                "city": "",
+                "goals": ""
+            }
 
         return {
-            "name": "",
-            "email": "",
-            "phone": "",
-            "college": "",
-            "course": "",
-            "semester": "",
-            "city": "",
-            "goals": ""
+
+            "name": row[1],
+            "email": row[2],
+            "phone": row[3],
+            "college": row[4],
+            "course": row[5],
+            "semester": row[6],
+            "city": row[7],
+            "goals": row[8]
+
         }
-
-    return {
-
-        "name": row[1],
-        "email": row[2],
-        "phone": row[3],
-        "college": row[4],
-        "course": row[5],
-        "semester": row[6],
-        "city": row[7],
-        "goals": row[8]
-
-    }
+    finally:
+        conn.close()
 
 
 def save_profile(data):
 
     conn = get_connection()
 
-    cursor = conn.cursor()
+    try:
+        cursor = conn.cursor()
 
-    cursor.execute("""
+        cursor.execute("""
 
-    INSERT OR REPLACE INTO profile
+        INSERT OR REPLACE INTO profile
 
-    (id,name,email,phone,college,course,semester,city,goals)
+        (id,name,email,phone,college,course,semester,city,goals)
 
-    VALUES
+        VALUES
 
-    (1,?,?,?,?,?,?,?,?)
+        (1,?,?,?,?,?,?,?,?)
 
-    """, (
+        """, (
 
-        data["name"],
-        data["email"],
-        data["phone"],
-        data["college"],
-        data["course"],
-        data["semester"],
-        data["city"],
-        data["goals"]
+            data["name"],
+            data["email"],
+            data["phone"],
+            data["college"],
+            data["course"],
+            data["semester"],
+            data["city"],
+            data["goals"]
 
-    ))
+        ))
 
-    conn.commit()
-    conn.close()
+        conn.commit()
+    finally:
+        conn.close()

@@ -1,11 +1,16 @@
+import logging
 from datetime import date, datetime
 from backend.db.database import get_connection
 
+logger = logging.getLogger(__name__)
+
 
 def get_notifications():
-
+    """Aggregates notifications from assignments, tasks, calendar, and reminders."""
     conn = get_connection()
-    cursor = conn.cursor()
+    try:
+        cursor = conn.cursor()
+
 
     notifications = []
 
@@ -116,75 +121,8 @@ def get_notifications():
 
 
     # ==========================================
-    # CALENDAR EVENTS
+    # CALENDAR EVENTS (via Google Calendar API — see end of function)
     # ==========================================
-
-    cursor.execute("""
-        SELECT id, event, event_date, event_time
-        FROM calendar_events
-        WHERE event_date IS NOT NULL
-    """)
-
-    events = cursor.fetchall()
-
-    for item in events:
-
-        event_id = item[0]
-        event = item[1]
-        event_date = item[2]
-        event_time = item[3]
-
-        try:
-            event_day = datetime.strptime(
-                event_date,
-                "%Y-%m-%d"
-            ).date()
-
-        except (ValueError, TypeError):
-            continue
-
-        days_left = (event_day - today).days
-
-        if days_left < 0:
-            continue
-
-        if days_left == 0:
-
-            message = f"{event} is today."
-
-            priority = "high"
-            icon = "🔴"
-
-        elif days_left == 1:
-
-            message = f"{event} is tomorrow."
-
-            priority = "medium"
-            icon = "🟡"
-
-        elif days_left <= 3:
-
-            message = f"{event} is in {days_left} days."
-
-            priority = "medium"
-            icon = "🟡"
-
-        else:
-
-            continue
-
-        if event_time:
-
-            message += f" Time: {event_time}"
-
-        notifications.append({
-            "type": "calendar",
-            "priority": priority,
-            "icon": icon,
-            "title": "Upcoming event",
-            "message": message,
-            "date": event_date
-        })
 
 
     # ==========================================
@@ -214,8 +152,37 @@ def get_notifications():
             "date": reminder_time
         })
 
+    finally:
+        conn.close()
 
-    conn.close()
+    # --- CALENDAR: Fetch from Google Calendar ---
+    try:
+        from backend.calendar.calender_manager import get_calendar_events
+        events = get_calendar_events()
+        for event in events:
+            event_date_str = event.get("date", "")
+            try:
+                event_day = datetime.strptime(event_date_str, "%Y-%m-%d").date()
+            except (ValueError, TypeError):
+                continue
+            days_left = (event_day - today).days
+            if days_left < 0:
+                continue
+            if days_left == 0:
+                priority = "high"
+                message = f"📅 Today: {event.get('title', 'Event')} at {event.get('time', 'N/A')}"
+            elif days_left <= 2:
+                priority = "medium"
+                message = f"📅 In {days_left} day(s): {event.get('title', 'Event')}"
+            else:
+                continue
+            notifications.append({
+                "type": "calendar",
+                "message": message,
+                "priority": priority,
+            })
+    except Exception:
+        logger.warning("Could not fetch Google Calendar events for notifications")
 
     # High priority first
     priority_order = {
