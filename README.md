@@ -255,16 +255,13 @@ python -m pytest tests/ -v --cov=backend --cov-report=term-missing
 
 ---
 
-## 🎯 Interview Talking Points
+## 🏗️ Architecture & Design Decisions
 
-> *"I built a full-stack AI-powered personal workspace with local LLM inference via Ollama, eliminating cloud API dependency. The system features a RAG pipeline using Sentence Transformers and ChromaDB for document Q&A, persistent conversational memory via vector embeddings, and integrations with Gmail and Google Calendar APIs. The backend uses FastAPI with SQLite (WAL mode) for concurrent access, and includes a smart notification engine that aggregates deadlines across tasks, assignments, and calendar events. The project is tested with pytest and automated via GitHub Actions CI/CD."*
-
-### Key Design Decisions:
-- **Why local LLM (Ollama)?** → Privacy-first, no API costs, works offline
-- **Why ChromaDB for memory?** → Semantic similarity search enables context-aware AI responses
-- **Why RAG?** → Grounds LLM responses in user's actual documents, reducing hallucination
-- **Why separate collections for docs vs memories?** → Prevents document operations from destroying user memories
-- **Why SQLite with WAL?** → Lightweight, zero-config, concurrent read support for web serving
+- **Local LLM Inference (Ollama):** Zero API costs, complete privacy for personal notes and reminders, and fully offline-capable operations.
+- **Dual Vector Collections:** Dedicated ChromaDB collections for documents (`doc_collection`) versus user memories (`mem_collection`) ensure document management operations never corrupt or wipe stored conversational history.
+- **Semantic RAG Pipeline:** Overlapping text chunking (500 characters, 100-character stride) paired with Sentence Transformers enables general-purpose semantic retrieval across any uploaded document format (PDF, DOCX, TXT).
+- **Concurrent Database Layer:** SQLite with Write-Ahead Logging (WAL) and connection pooling wrappers ensures safe multi-service reads and writes.
+- **Decoupled Service Architecture:** Clean separation of concerns between API routing (`main.py`), retrieval (`rag_service.py`), memory (`memory_service.py`), and external integrations (Google Calendar & Gmail).
 
 ---
 
