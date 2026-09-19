@@ -6,9 +6,76 @@ const API = "http://127.0.0.1:8000";
 
 let currentEmailBody = "";
 let currentEmailId = null;
+let isDemoMode = false;
 
 const main = document.querySelector(".main");
 
+// Sample data for Live Web Demo Mode (GitHub Pages / Standalone Preview)
+const MOCK_DATA = {
+    "/dashboard": {
+        total_tasks: 8,
+        completed_tasks: 5,
+        total_assignments: 4,
+        completed_assignments: 2,
+        upcoming_events: 3,
+        total_notes: 12
+    },
+    "/tasks": [
+        { id: 1, task: "Review Mini-Redis benchmark metrics (1.2M ops/sec)", status: "Completed" },
+        { id: 2, task: "Prepare system architecture presentation", status: "Pending" },
+        { id: 3, task: "Implement LRU eviction callback unit tests", status: "Completed" },
+        { id: 4, task: "Optimize ChromaDB vector retrieval top-k", status: "Pending" }
+    ],
+    "/assignments": [
+        { id: 1, subject: "Operating Systems", title: "Virtual Memory & Paging Analysis", deadline: "2026-09-25", status: "Pending" },
+        { id: 2, subject: "Computer Networks", title: "TCP Congestion Control Simulation", deadline: "2026-09-28", status: "Pending" },
+        { id: 3, subject: "Database Systems", title: "B+ Tree Index Implementation", deadline: "2026-09-20", status: "Completed" }
+    ],
+    "/timetable": [
+        { id: 1, day: "Monday", subject: "Data Structures & Algorithms", time: "09:00 - 10:30", room: "LT-1" },
+        { id: 2, day: "Monday", subject: "Operating Systems", time: "11:00 - 12:30", room: "LT-3" },
+        { id: 3, day: "Tuesday", subject: "Computer Networks", time: "10:00 - 11:30", room: "LT-2" },
+        { id: 4, day: "Wednesday", subject: "Database Management Systems", time: "14:00 - 15:30", room: "Lab-4" }
+    ],
+    "/calendar": [
+        { id: "1", title: "DSA Showdown Finals", date: "2026-09-22", time: "14:00" },
+        { id: "2", title: "Technical Mock Interview", date: "2026-09-24", time: "16:30" },
+        { id: "3", title: "Sprint Review — HomelyHub", date: "2026-09-27", time: "11:00" }
+    ],
+    "/notes": {
+        notes: [
+            "LRU Cache: HashMap provides O(1) key lookups, Doubly Linked List enables O(1) removal and insertion at head.",
+            "RAG Architecture: Chunk documents with 500 chars and 100 stride to preserve cross-chunk context.",
+            "Ollama integration: Using LLaMA-3 with prompt templates for personalized task assistance."
+        ]
+    },
+    "/notifications": [
+        { type: "assignment", priority: "high", icon: "🔴", title: "Upcoming Assignment", message: "Virtual Memory & Paging Analysis is due in 6 days.", date: "2026-09-25" },
+        { type: "calendar", priority: "medium", icon: "🟡", title: "Calendar Event", message: "📅 In 3 day(s): DSA Showdown Finals", date: "2026-09-22" },
+        { type: "task", priority: "low", icon: "🟢", title: "Pending Task", message: "Prepare system architecture presentation", date: null }
+    ],
+    "/profile": {
+        name: "Akanksha Maurya",
+        role: "B.Tech ECE Student & Developer",
+        college: "IIIT Senapati, Manipur",
+        email: "iamakankshamaurya961@gmail.com",
+        github: "https://github.com/iamakankshamaurya961-lang"
+    },
+    "/gmail": [
+        { id: "m1", sender: "GitHub <notifications@github.com>", subject: "CI Pipeline: All tests passed on main", date: "Sep 19" },
+        { id: "m2", sender: "Coursera <no-reply@coursera.org>", subject: "Certificate: Microsoft Generative AI Engineering", date: "Sep 18" },
+        { id: "m3", sender: "LeetCode <team@leetcode.com>", subject: "Weekly Contest 415 Ranking Update", date: "Sep 17" }
+    ]
+};
+
+function showDemoBanner() {
+    if (document.getElementById("demo-mode-banner")) return;
+    const banner = document.createElement("div");
+    banner.id = "demo-mode-banner";
+    banner.style.cssText = "background: linear-gradient(90deg, #1e293b, #0f172a); color: #38bdf8; border-bottom: 1px solid #334155; padding: 6px 16px; font-size: 12px; text-align: center; position: sticky; top: 0; z-index: 9999; display: flex; align-items: center; justify-content: center; gap: 8px;";
+    banner.innerHTML = `<span>⚡ <strong>Interactive Web Preview (Demo Mode)</strong> — Showing sample data. Clone repository for local Ollama LLaMA-3 inference.</span>`;
+    document.body.prepend(banner);
+}
 
 /* =========================================================
    HELPERS
@@ -29,25 +96,40 @@ function escapeHtml(value) {
 
 
 async function fetchJSON(url, options = {}) {
-    const response = await fetch(url, options);
-
-    let data = {};
-
     try {
-        data = await response.json();
-    } catch {
-        data = {};
-    }
+        const response = await fetch(url, options);
+        let data = {};
+        try {
+            data = await response.json();
+        } catch {
+            data = {};
+        }
 
-    if (!response.ok) {
-        throw new Error(
-            data.error ||
-            data.message ||
-            `Request failed: ${response.status}`
-        );
-    }
+        if (!response.ok) {
+            throw new Error(data.error || data.message || `Request failed: ${response.status}`);
+        }
+        return data;
+    } catch (err) {
+        // Fallback to Mock Data when backend is offline (e.g. GitHub Pages)
+        isDemoMode = true;
+        showDemoBanner();
 
-    return data;
+        for (const [endpoint, mockResponse] of Object.entries(MOCK_DATA)) {
+            if (url.includes(endpoint)) {
+                return JSON.parse(JSON.stringify(mockResponse));
+            }
+        }
+
+        if (url.includes("/ask")) {
+            const urlObj = new URL(url, "http://localhost");
+            const q = urlObj.searchParams.get("question") || "your query";
+            return {
+                response: `[Live Demo Preview] Hello! You asked: "${q}". In this interactive web preview, I am running in client-side demonstration mode with sample data. When deployed locally with the FastAPI backend, I connect directly to your local Ollama LLaMA-3 engine with ChromaDB vector search and persistent memory!`
+            };
+        }
+
+        return {};
+    }
 }
 
 
