@@ -7,6 +7,18 @@
 [![Ollama](https://img.shields.io/badge/Ollama-LLM-black.svg)](https://ollama.com)
 
 > **A full-stack AI-powered personal workspace that brings tasks, assignments, calendar, email, documents, memory, and AI assistance into one unified system — powered by local LLM inference.**
+ 
+ ---
+
+## 📸 Application Preview
+
+| Dashboard | AI Chat |
+|---|---|
+| ![Dashboard](docs/screenshots/dashboard.png) | ![Chat](docs/screenshots/chat.png) |
+
+| Assignments & Tasks | Calendar & Gmail |
+|---|---|
+| ![Assignments](docs/screenshots/assignments.png) | ![Calendar](docs/screenshots/calendar.png) |
 
 ---
 
@@ -151,22 +163,6 @@ Open **http://localhost:5500** in your browser! 🎉
 | `POST` | `/gmail/reply` | Generate AI reply to email |
 | `POST` | `/gmail/send-reply` | Send email reply via Gmail |
 | `GET` | `/auth/gmail/login` | Start Gmail OAuth flow |
-
----
-
-## 📸 Application Preview
-
-| Dashboard | AI Chat |
-|---|---|
-| ![Dashboard](docs/screenshots/dashboard.png) | ![Chat](docs/screenshots/chat.png) |
-
-| Assignments | Tasks |
-|---|---|
-| ![Assignments](docs/screenshots/assignments.png) | ![Tasks](docs/screenshots/tasks.png) |
-
-| Calendar | Gmail |
-|---|---|
-| ![Calendar](docs/screenshots/calendar.png) | ![Gmail](docs/screenshots/gmail.png) |
 
 ---
 
