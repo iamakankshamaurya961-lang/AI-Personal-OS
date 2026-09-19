@@ -39,16 +39,23 @@ const MOCK_DATA = {
         { id: 3, subject: "Database Systems", title: "B+ Tree Index Implementation", deadline: "2026-09-20", status: "Completed" }
     ],
     "/timetable": [
-        { id: 1, day: "Monday", subject: "Data Structures & Algorithms", time: "09:00 - 10:30", room: "LT-1" },
-        { id: 2, day: "Monday", subject: "Operating Systems", time: "11:00 - 12:30", room: "LT-3" },
-        { id: 3, day: "Tuesday", subject: "Computer Networks", time: "10:00 - 11:30", room: "LT-2" },
-        { id: 4, day: "Wednesday", subject: "Database Management Systems", time: "14:00 - 15:30", room: "Lab-4" }
+        { id: 1, day: "Monday", subject: "Data Structures & Algorithms", time: "09:00 - 10:30", start_time: "09:00", end_time: "10:30", location: "LT-1", room: "LT-1" },
+        { id: 2, day: "Monday", subject: "Operating Systems", time: "11:00 - 12:30", start_time: "11:00", end_time: "12:30", location: "LT-3", room: "LT-3" },
+        { id: 3, day: "Tuesday", subject: "Computer Networks", time: "10:00 - 11:30", start_time: "10:00", end_time: "11:30", location: "LT-2", room: "LT-2" },
+        { id: 4, day: "Wednesday", subject: "Database Management Systems", time: "14:00 - 15:30", start_time: "14:00", end_time: "15:30", location: "Lab-4", room: "Lab-4" }
     ],
     "/calendar": [
-        { id: "1", title: "DSA Showdown Finals", date: "2026-09-22", time: "14:00" },
-        { id: "2", title: "Technical Mock Interview", date: "2026-09-24", time: "16:30" },
-        { id: "3", title: "Sprint Review — HomelyHub", date: "2026-09-27", time: "11:00" }
+        { id: "1", title: "DSA Showdown Finals", event: "DSA Showdown Finals", date: "2026-09-22", event_date: "2026-09-22", time: "14:00", event_time: "14:00" },
+        { id: "2", title: "Technical Mock Interview", event: "Technical Mock Interview", date: "2026-09-24", event_date: "2026-09-24", time: "16:30", event_time: "16:30" },
+        { id: "3", title: "Sprint Review — HomelyHub", event: "Sprint Review — HomelyHub", date: "2026-09-27", event_date: "2026-09-27", time: "11:00", event_time: "11:00" }
     ],
+    "/memory": {
+        memory: [
+            "User is Akanksha Maurya, B.Tech ECE at IIIT Senapati.",
+            "Building HomelyHub property booking MERN platform.",
+            "Engineered Mini-Redis with 1.2M ops/sec throughput."
+        ]
+    },
     "/notes": {
         notes: [
             "LRU Cache: HashMap provides O(1) key lookups, Doubly Linked List enables O(1) removal and insertion at head.",
@@ -107,7 +114,11 @@ async function fetchJSON(url, options = {}) {
 
     if (!isDemoMode) {
         try {
-            const response = await fetch(url, options);
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 1500);
+            const response = await fetch(url, { ...options, signal: controller.signal });
+            clearTimeout(timeoutId);
+
             let data = {};
             try {
                 data = await response.json();
