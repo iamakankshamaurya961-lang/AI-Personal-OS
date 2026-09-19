@@ -1,17 +1,14 @@
 # 🧠 AI Personal OS
 
 [![CI Pipeline](https://github.com/iamakankshamaurya961-lang/AI-Personal-OS/actions/workflows/tests.yml/badge.svg)](https://github.com/iamakankshamaurya961-lang/AI-Personal-OS/actions)
-[![Live Demo](https://img.shields.io/badge/Live%20Demo-Interactive%20Preview-brightgreen?logo=google-chrome&logoColor=white)](https://iamakankshamaurya961-lang.github.io/AI-Personal-OS/)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://python.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![FastAPI](https://img.shields.io/badge/FastAPI-009688.svg?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
 [![Ollama](https://img.shields.io/badge/Ollama-LLM-black.svg)](https://ollama.com)
 
 > **A full-stack AI-powered personal workspace that brings tasks, assignments, calendar, email, documents, memory, and AI assistance into one unified system — powered by local LLM inference.**
-> 
-> 🌐 **Interactive Web Preview:** [https://iamakankshamaurya961-lang.github.io/AI-Personal-OS/](https://iamakankshamaurya961-lang.github.io/AI-Personal-OS/)
- 
- ---
+
+---
 
 ## 📸 Application Preview
 

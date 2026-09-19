@@ -6,90 +6,9 @@ const API = "http://127.0.0.1:8000";
 
 let currentEmailBody = "";
 let currentEmailId = null;
-const isHostedDemo = window.location.hostname.includes("github.io") || (window.location.protocol === "https:" && !window.location.hostname.includes("localhost"));
-let isDemoMode = isHostedDemo;
-
-if (isHostedDemo) {
-    window.addEventListener("DOMContentLoaded", () => {
-        showDemoBanner();
-    });
-}
 
 const main = document.querySelector(".main");
 
-// Sample data for Live Web Demo Mode (GitHub Pages / Standalone Preview)
-const MOCK_DATA = {
-    "/dashboard": {
-        total_tasks: 8,
-        completed_tasks: 5,
-        total_assignments: 4,
-        completed_assignments: 2,
-        upcoming_events: 3,
-        total_notes: 12
-    },
-    "/tasks": [
-        { id: 1, task: "Review Mini-Redis benchmark metrics (1.2M ops/sec)", status: "Completed" },
-        { id: 2, task: "Prepare system architecture presentation", status: "Pending" },
-        { id: 3, task: "Implement LRU eviction callback unit tests", status: "Completed" },
-        { id: 4, task: "Optimize ChromaDB vector retrieval top-k", status: "Pending" }
-    ],
-    "/assignments": [
-        { id: 1, subject: "Operating Systems", title: "Virtual Memory & Paging Analysis", deadline: "2026-09-25", status: "Pending" },
-        { id: 2, subject: "Computer Networks", title: "TCP Congestion Control Simulation", deadline: "2026-09-28", status: "Pending" },
-        { id: 3, subject: "Database Systems", title: "B+ Tree Index Implementation", deadline: "2026-09-20", status: "Completed" }
-    ],
-    "/timetable": [
-        { id: 1, day: "Monday", subject: "Data Structures & Algorithms", time: "09:00 - 10:30", start_time: "09:00", end_time: "10:30", location: "LT-1", room: "LT-1" },
-        { id: 2, day: "Monday", subject: "Operating Systems", time: "11:00 - 12:30", start_time: "11:00", end_time: "12:30", location: "LT-3", room: "LT-3" },
-        { id: 3, day: "Tuesday", subject: "Computer Networks", time: "10:00 - 11:30", start_time: "10:00", end_time: "11:30", location: "LT-2", room: "LT-2" },
-        { id: 4, day: "Wednesday", subject: "Database Management Systems", time: "14:00 - 15:30", start_time: "14:00", end_time: "15:30", location: "Lab-4", room: "Lab-4" }
-    ],
-    "/calendar": [
-        { id: "1", title: "DSA Showdown Finals", event: "DSA Showdown Finals", date: "2026-09-22", event_date: "2026-09-22", time: "14:00", event_time: "14:00" },
-        { id: "2", title: "Technical Mock Interview", event: "Technical Mock Interview", date: "2026-09-24", event_date: "2026-09-24", time: "16:30", event_time: "16:30" },
-        { id: "3", title: "Sprint Review — HomelyHub", event: "Sprint Review — HomelyHub", date: "2026-09-27", event_date: "2026-09-27", time: "11:00", event_time: "11:00" }
-    ],
-    "/memory": {
-        memory: [
-            "User is Akanksha Maurya, B.Tech ECE at IIIT Senapati.",
-            "Building HomelyHub property booking MERN platform.",
-            "Engineered Mini-Redis with 1.2M ops/sec throughput."
-        ]
-    },
-    "/notes": {
-        notes: [
-            "LRU Cache: HashMap provides O(1) key lookups, Doubly Linked List enables O(1) removal and insertion at head.",
-            "RAG Architecture: Chunk documents with 500 chars and 100 stride to preserve cross-chunk context.",
-            "Ollama integration: Using LLaMA-3 with prompt templates for personalized task assistance."
-        ]
-    },
-    "/notifications": [
-        { type: "assignment", priority: "high", icon: "🔴", title: "Upcoming Assignment", message: "Virtual Memory & Paging Analysis is due in 6 days.", date: "2026-09-25" },
-        { type: "calendar", priority: "medium", icon: "🟡", title: "Calendar Event", message: "📅 In 3 day(s): DSA Showdown Finals", date: "2026-09-22" },
-        { type: "task", priority: "low", icon: "🟢", title: "Pending Task", message: "Prepare system architecture presentation", date: null }
-    ],
-    "/profile": {
-        name: "Akanksha Maurya",
-        role: "B.Tech ECE Student & Developer",
-        college: "IIIT Senapati, Manipur",
-        email: "iamakankshamaurya961@gmail.com",
-        github: "https://github.com/iamakankshamaurya961-lang"
-    },
-    "/gmail": [
-        { id: "m1", sender: "GitHub <notifications@github.com>", subject: "CI Pipeline: All tests passed on main", date: "Sep 19" },
-        { id: "m2", sender: "Coursera <no-reply@coursera.org>", subject: "Certificate: Microsoft Generative AI Engineering", date: "Sep 18" },
-        { id: "m3", sender: "LeetCode <team@leetcode.com>", subject: "Weekly Contest 415 Ranking Update", date: "Sep 17" }
-    ]
-};
-
-function showDemoBanner() {
-    if (document.getElementById("demo-mode-banner")) return;
-    const banner = document.createElement("div");
-    banner.id = "demo-mode-banner";
-    banner.style.cssText = "background: linear-gradient(90deg, #1e293b, #0f172a); color: #38bdf8; border-bottom: 1px solid #334155; padding: 6px 16px; font-size: 12px; text-align: center; position: sticky; top: 0; z-index: 9999; display: flex; align-items: center; justify-content: center; gap: 8px;";
-    banner.innerHTML = `<span>⚡ <strong>Interactive Web Preview (Demo Mode)</strong> — Showing sample data. Clone repository for local Ollama LLaMA-3 inference.</span>`;
-    document.body.prepend(banner);
-}
 
 /* =========================================================
    HELPERS
@@ -110,186 +29,25 @@ function escapeHtml(value) {
 
 
 async function fetchJSON(url, options = {}) {
-    const method = (options.method || "GET").toUpperCase();
+    const response = await fetch(url, options);
 
-    if (!isDemoMode) {
-        try {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 1500);
-            const response = await fetch(url, { ...options, signal: controller.signal });
-            clearTimeout(timeoutId);
+    let data = {};
 
-            let data = {};
-            try {
-                data = await response.json();
-            } catch {
-                data = {};
-            }
-
-            if (!response.ok) {
-                throw new Error(data.error || data.message || `Request failed: ${response.status}`);
-            }
-            return data;
-        } catch (err) {
-            isDemoMode = true;
-            showDemoBanner();
-        }
+    try {
+        data = await response.json();
+    } catch {
+        data = {};
     }
 
-    // Fallback to Interactive Mock Data (instant response on GitHub Pages)
-    showDemoBanner();
-
-        // 1. AI Chat (/ask)
-        if (url.includes("/ask")) {
-            let question = "";
-            try {
-                const urlObj = new URL(url, "http://localhost");
-                question = urlObj.searchParams.get("question") || "";
-            } catch {
-                question = "";
-            }
-            if (!question && options.body) {
-                try {
-                    const parsed = JSON.parse(options.body);
-                    question = parsed.question || "";
-                } catch {
-                    question = "";
-                }
-            }
-
-            const qLower = question.toLowerCase();
-            let aiText = "";
-
-            if (qLower.includes("hello") || qLower.includes("hi") || qLower.includes("hey")) {
-                aiText = "Hello! 👋 I am your AI Personal OS assistant. I can help you manage assignments, keep track of tasks, check your calendar, and search your personal knowledge base.";
-            } else if (qLower.includes("who are you") || qLower.includes("what are you") || qLower.includes("who r u")) {
-                aiText = "I am your AI Personal OS — an intelligent personal workspace. In full local deployment, I run on local LLaMA-3 via Ollama with ChromaDB RAG and persistent vector memory!";
-            } else if (qLower.includes("task") || qLower.includes("todo")) {
-                aiText = `You currently have ${MOCK_DATA["/tasks"].length} tasks in your workspace (${MOCK_DATA["/tasks"].filter(t => t.status === "Completed").length} completed). You can add or complete tasks anytime in the Tasks tab!`;
-            } else if (qLower.includes("assignment") || qLower.includes("deadline")) {
-                aiText = `You have ${MOCK_DATA["/assignments"].filter(a => a.status !== "Completed").length} pending assignments. The next upcoming deadline is 'Virtual Memory & Paging Analysis' (Operating Systems).`;
-            } else if (qLower.includes("help") || qLower.includes("features") || qLower.includes("what can you do")) {
-                aiText = "Here is what I can do:\n• 📋 Manage tasks & assignments with deadline tracking\n• 📅 Sync timetable and Google Calendar events\n• 📚 RAG document search on uploaded PDFs and notes\n• 🧠 Persistent conversational memory\n• 🔔 Priority-sorted notifications";
-            } else {
-                aiText = `[Demo Mode] You asked: "${question}". In this live web preview, I am running client-side with simulated inference. In your local deployment, I connect directly to Ollama LLaMA-3 with ChromaDB vector search and persistent memory to answer your questions!`;
-            }
-
-            return { answer: aiText };
-        }
-
-        // 2. Tasks CRUD
-        if (url.includes("/tasks")) {
-            const pathParts = url.split("/");
-            const lastPart = pathParts[pathParts.length - 1].split("?")[0];
-            const id = parseInt(lastPart, 10);
-
-            if (method === "POST") {
-                let body = {};
-                try { body = JSON.parse(options.body); } catch { body = {}; }
-                const newTask = {
-                    id: Date.now(),
-                    task: body.task || "New Task",
-                    status: "Pending"
-                };
-                MOCK_DATA["/tasks"].unshift(newTask);
-                return { message: "Task added successfully!", task: newTask };
-            }
-
-            if (method === "PUT" && !isNaN(id)) {
-                const task = MOCK_DATA["/tasks"].find(t => t.id === id);
-                if (task) task.status = "Completed";
-                return { message: "Task marked as completed!" };
-            }
-
-            if (method === "DELETE" && !isNaN(id)) {
-                MOCK_DATA["/tasks"] = MOCK_DATA["/tasks"].filter(t => t.id !== id);
-                return { message: "Task deleted successfully!" };
-            }
-
-            return JSON.parse(JSON.stringify(MOCK_DATA["/tasks"]));
-        }
-
-        // 3. Assignments CRUD
-        if (url.includes("/assignments")) {
-            const pathParts = url.split("/");
-            const lastPart = pathParts[pathParts.length - 1].split("?")[0];
-            const id = parseInt(lastPart, 10);
-
-            if (method === "POST") {
-                let body = {};
-                try { body = JSON.parse(options.body); } catch { body = {}; }
-                const newAssign = {
-                    id: Date.now(),
-                    subject: body.subject || "General",
-                    title: body.title || "New Assignment",
-                    deadline: body.deadline || "2026-09-30",
-                    status: "Pending"
-                };
-                MOCK_DATA["/assignments"].unshift(newAssign);
-                return { message: "Assignment added successfully!", assignment: newAssign };
-            }
-
-            if (method === "PUT" && !isNaN(id)) {
-                const item = MOCK_DATA["/assignments"].find(a => a.id === id);
-                if (item) item.status = "Completed";
-                return { message: "Assignment completed!" };
-            }
-
-            if (method === "DELETE" && !isNaN(id)) {
-                MOCK_DATA["/assignments"] = MOCK_DATA["/assignments"].filter(a => a.id !== id);
-                return { message: "Assignment deleted!" };
-            }
-
-            return JSON.parse(JSON.stringify(MOCK_DATA["/assignments"]));
-        }
-
-        // 4. Calendar CRUD
-        if (url.includes("/calendar")) {
-            const pathParts = url.split("/");
-            const lastPart = pathParts[pathParts.length - 1].split("?")[0];
-
-            if (method === "POST") {
-                let body = {};
-                try { body = JSON.parse(options.body); } catch { body = {}; }
-                const newEvent = {
-                    id: String(Date.now()),
-                    title: body.title || "New Event",
-                    date: body.date || "2026-09-25",
-                    time: body.time || "10:00"
-                };
-                MOCK_DATA["/calendar"].unshift(newEvent);
-                return { message: "Event created successfully!" };
-            }
-
-            if (method === "DELETE") {
-                MOCK_DATA["/calendar"] = MOCK_DATA["/calendar"].filter(e => e.id !== lastPart);
-                return { message: "Event deleted successfully!" };
-            }
-
-            return JSON.parse(JSON.stringify(MOCK_DATA["/calendar"]));
-        }
-
-        // 5. Dashboard (Dynamic Stats)
-        if (url.includes("/dashboard")) {
-            return {
-                total_tasks: MOCK_DATA["/tasks"].length,
-                completed_tasks: MOCK_DATA["/tasks"].filter(t => t.status === "Completed").length,
-                total_assignments: MOCK_DATA["/assignments"].length,
-                completed_assignments: MOCK_DATA["/assignments"].filter(a => a.status === "Completed").length,
-                upcoming_events: MOCK_DATA["/calendar"].length,
-                total_notes: MOCK_DATA["/notes"].notes.length
-            };
-        }
-
-        // 6. Other Endpoints (Notes, Profile, Timetable, Notifications, Gmail)
-        for (const [endpoint, mockResponse] of Object.entries(MOCK_DATA)) {
-            if (url.includes(endpoint)) {
-                return JSON.parse(JSON.stringify(mockResponse));
-            }
-        }
-
-        return {};
+    if (!response.ok) {
+        throw new Error(
+            data.error ||
+            data.message ||
+            `Request failed: ${response.status}`
+        );
     }
+
+    return data;
 }
 
 
