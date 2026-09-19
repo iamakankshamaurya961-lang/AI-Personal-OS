@@ -6,7 +6,14 @@ const API = "http://127.0.0.1:8000";
 
 let currentEmailBody = "";
 let currentEmailId = null;
-let isDemoMode = false;
+const isHostedDemo = window.location.hostname.includes("github.io") || (window.location.protocol === "https:" && !window.location.hostname.includes("localhost"));
+let isDemoMode = isHostedDemo;
+
+if (isHostedDemo) {
+    window.addEventListener("DOMContentLoaded", () => {
+        showDemoBanner();
+    });
+}
 
 const main = document.querySelector(".main");
 
@@ -98,23 +105,28 @@ function escapeHtml(value) {
 async function fetchJSON(url, options = {}) {
     const method = (options.method || "GET").toUpperCase();
 
-    try {
-        const response = await fetch(url, options);
-        let data = {};
+    if (!isDemoMode) {
         try {
-            data = await response.json();
-        } catch {
-            data = {};
-        }
+            const response = await fetch(url, options);
+            let data = {};
+            try {
+                data = await response.json();
+            } catch {
+                data = {};
+            }
 
-        if (!response.ok) {
-            throw new Error(data.error || data.message || `Request failed: ${response.status}`);
+            if (!response.ok) {
+                throw new Error(data.error || data.message || `Request failed: ${response.status}`);
+            }
+            return data;
+        } catch (err) {
+            isDemoMode = true;
+            showDemoBanner();
         }
-        return data;
-    } catch (err) {
-        // Fallback to Interactive Mock Data when backend is offline (e.g. GitHub Pages)
-        isDemoMode = true;
-        showDemoBanner();
+    }
+
+    // Fallback to Interactive Mock Data (instant response on GitHub Pages)
+    showDemoBanner();
 
         // 1. AI Chat (/ask)
         if (url.includes("/ask")) {
