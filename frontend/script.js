@@ -96,6 +96,8 @@ function escapeHtml(value) {
 
 
 async function fetchJSON(url, options = {}) {
+    const method = (options.method || "GET").toUpperCase();
+
     try {
         const response = await fetch(url, options);
         let data = {};
@@ -110,22 +112,157 @@ async function fetchJSON(url, options = {}) {
         }
         return data;
     } catch (err) {
-        // Fallback to Mock Data when backend is offline (e.g. GitHub Pages)
+        // Fallback to Interactive Mock Data when backend is offline (e.g. GitHub Pages)
         isDemoMode = true;
         showDemoBanner();
 
+        // 1. AI Chat (/ask)
+        if (url.includes("/ask")) {
+            let question = "";
+            try {
+                const urlObj = new URL(url, "http://localhost");
+                question = urlObj.searchParams.get("question") || "";
+            } catch {
+                question = "";
+            }
+            if (!question && options.body) {
+                try {
+                    const parsed = JSON.parse(options.body);
+                    question = parsed.question || "";
+                } catch {
+                    question = "";
+                }
+            }
+
+            const qLower = question.toLowerCase();
+            let aiText = "";
+
+            if (qLower.includes("hello") || qLower.includes("hi") || qLower.includes("hey")) {
+                aiText = "Hello! 👋 I am your AI Personal OS assistant. I can help you manage assignments, keep track of tasks, check your calendar, and search your personal knowledge base.";
+            } else if (qLower.includes("who are you") || qLower.includes("what are you") || qLower.includes("who r u")) {
+                aiText = "I am your AI Personal OS — an intelligent personal workspace. In full local deployment, I run on local LLaMA-3 via Ollama with ChromaDB RAG and persistent vector memory!";
+            } else if (qLower.includes("task") || qLower.includes("todo")) {
+                aiText = `You currently have ${MOCK_DATA["/tasks"].length} tasks in your workspace (${MOCK_DATA["/tasks"].filter(t => t.status === "Completed").length} completed). You can add or complete tasks anytime in the Tasks tab!`;
+            } else if (qLower.includes("assignment") || qLower.includes("deadline")) {
+                aiText = `You have ${MOCK_DATA["/assignments"].filter(a => a.status !== "Completed").length} pending assignments. The next upcoming deadline is 'Virtual Memory & Paging Analysis' (Operating Systems).`;
+            } else if (qLower.includes("help") || qLower.includes("features") || qLower.includes("what can you do")) {
+                aiText = "Here is what I can do:\n• 📋 Manage tasks & assignments with deadline tracking\n• 📅 Sync timetable and Google Calendar events\n• 📚 RAG document search on uploaded PDFs and notes\n• 🧠 Persistent conversational memory\n• 🔔 Priority-sorted notifications";
+            } else {
+                aiText = `[Demo Mode] You asked: "${question}". In this live web preview, I am running client-side with simulated inference. In your local deployment, I connect directly to Ollama LLaMA-3 with ChromaDB vector search and persistent memory to answer your questions!`;
+            }
+
+            return { answer: aiText };
+        }
+
+        // 2. Tasks CRUD
+        if (url.includes("/tasks")) {
+            const pathParts = url.split("/");
+            const lastPart = pathParts[pathParts.length - 1].split("?")[0];
+            const id = parseInt(lastPart, 10);
+
+            if (method === "POST") {
+                let body = {};
+                try { body = JSON.parse(options.body); } catch { body = {}; }
+                const newTask = {
+                    id: Date.now(),
+                    task: body.task || "New Task",
+                    status: "Pending"
+                };
+                MOCK_DATA["/tasks"].unshift(newTask);
+                return { message: "Task added successfully!", task: newTask };
+            }
+
+            if (method === "PUT" && !isNaN(id)) {
+                const task = MOCK_DATA["/tasks"].find(t => t.id === id);
+                if (task) task.status = "Completed";
+                return { message: "Task marked as completed!" };
+            }
+
+            if (method === "DELETE" && !isNaN(id)) {
+                MOCK_DATA["/tasks"] = MOCK_DATA["/tasks"].filter(t => t.id !== id);
+                return { message: "Task deleted successfully!" };
+            }
+
+            return JSON.parse(JSON.stringify(MOCK_DATA["/tasks"]));
+        }
+
+        // 3. Assignments CRUD
+        if (url.includes("/assignments")) {
+            const pathParts = url.split("/");
+            const lastPart = pathParts[pathParts.length - 1].split("?")[0];
+            const id = parseInt(lastPart, 10);
+
+            if (method === "POST") {
+                let body = {};
+                try { body = JSON.parse(options.body); } catch { body = {}; }
+                const newAssign = {
+                    id: Date.now(),
+                    subject: body.subject || "General",
+                    title: body.title || "New Assignment",
+                    deadline: body.deadline || "2026-09-30",
+                    status: "Pending"
+                };
+                MOCK_DATA["/assignments"].unshift(newAssign);
+                return { message: "Assignment added successfully!", assignment: newAssign };
+            }
+
+            if (method === "PUT" && !isNaN(id)) {
+                const item = MOCK_DATA["/assignments"].find(a => a.id === id);
+                if (item) item.status = "Completed";
+                return { message: "Assignment completed!" };
+            }
+
+            if (method === "DELETE" && !isNaN(id)) {
+                MOCK_DATA["/assignments"] = MOCK_DATA["/assignments"].filter(a => a.id !== id);
+                return { message: "Assignment deleted!" };
+            }
+
+            return JSON.parse(JSON.stringify(MOCK_DATA["/assignments"]));
+        }
+
+        // 4. Calendar CRUD
+        if (url.includes("/calendar")) {
+            const pathParts = url.split("/");
+            const lastPart = pathParts[pathParts.length - 1].split("?")[0];
+
+            if (method === "POST") {
+                let body = {};
+                try { body = JSON.parse(options.body); } catch { body = {}; }
+                const newEvent = {
+                    id: String(Date.now()),
+                    title: body.title || "New Event",
+                    date: body.date || "2026-09-25",
+                    time: body.time || "10:00"
+                };
+                MOCK_DATA["/calendar"].unshift(newEvent);
+                return { message: "Event created successfully!" };
+            }
+
+            if (method === "DELETE") {
+                MOCK_DATA["/calendar"] = MOCK_DATA["/calendar"].filter(e => e.id !== lastPart);
+                return { message: "Event deleted successfully!" };
+            }
+
+            return JSON.parse(JSON.stringify(MOCK_DATA["/calendar"]));
+        }
+
+        // 5. Dashboard (Dynamic Stats)
+        if (url.includes("/dashboard")) {
+            return {
+                total_tasks: MOCK_DATA["/tasks"].length,
+                completed_tasks: MOCK_DATA["/tasks"].filter(t => t.status === "Completed").length,
+                total_assignments: MOCK_DATA["/assignments"].length,
+                completed_assignments: MOCK_DATA["/assignments"].filter(a => a.status === "Completed").length,
+                upcoming_events: MOCK_DATA["/calendar"].length,
+                total_notes: MOCK_DATA["/notes"].notes.length
+            };
+        }
+
+        // 6. Other Endpoints (Notes, Profile, Timetable, Notifications, Gmail)
         for (const [endpoint, mockResponse] of Object.entries(MOCK_DATA)) {
             if (url.includes(endpoint)) {
                 return JSON.parse(JSON.stringify(mockResponse));
             }
-        }
-
-        if (url.includes("/ask")) {
-            const urlObj = new URL(url, "http://localhost");
-            const q = urlObj.searchParams.get("question") || "your query";
-            return {
-                response: `[Live Demo Preview] Hello! You asked: "${q}". In this interactive web preview, I am running in client-side demonstration mode with sample data. When deployed locally with the FastAPI backend, I connect directly to your local Ollama LLaMA-3 engine with ChromaDB vector search and persistent memory!`
-            };
         }
 
         return {};
