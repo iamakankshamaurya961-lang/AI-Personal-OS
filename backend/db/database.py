@@ -58,8 +58,8 @@ CREATE TABLE IF NOT EXISTS profile(
     city TEXT,
     goals TEXT
 )
-""") 
-    
+""")
+
 
     # --------------------------
     # Timetable

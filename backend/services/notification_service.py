@@ -8,149 +8,126 @@ logger = logging.getLogger(__name__)
 def get_notifications():
     """Aggregates notifications from assignments, tasks, calendar, and reminders."""
     conn = get_connection()
+    notifications = []
+    today = date.today()
+
     try:
         cursor = conn.cursor()
 
+        # ==========================================
+        # ASSIGNMENTS
+        # ==========================================
 
-    notifications = []
+        cursor.execute("""
+            SELECT id, subject, title, deadline, status
+            FROM assignments
+            WHERE status != 'Completed'
+            AND deadline IS NOT NULL
+        """)
 
-    today = date.today()
+        assignments = cursor.fetchall()
 
-    # ==========================================
-    # ASSIGNMENTS
-    # ==========================================
+        for item in assignments:
+            assignment_id = item[0]
+            subject = item[1]
+            title = item[2]
+            deadline = item[3]
+            status = item[4]
 
-    cursor.execute("""
-        SELECT id, subject, title, deadline, status
-        FROM assignments
-        WHERE status != 'Completed'
-        AND deadline IS NOT NULL
-    """)
+            try:
+                deadline_date = datetime.strptime(deadline, "%Y-%m-%d").date()
+            except (ValueError, TypeError):
+                continue
 
-    assignments = cursor.fetchall()
+            days_left = (deadline_date - today).days
 
-    for item in assignments:
+            if days_left < 0:
+                notifications.append({
+                    "type": "assignment",
+                    "priority": "high",
+                    "icon": "🔴",
+                    "title": "Assignment overdue",
+                    "message": f"{title} ({subject}) is overdue.",
+                    "date": deadline
+                })
+            elif days_left == 0:
+                notifications.append({
+                    "type": "assignment",
+                    "priority": "high",
+                    "icon": "🔴",
+                    "title": "Assignment due today",
+                    "message": f"{title} ({subject}) is due today.",
+                    "date": deadline
+                })
+            elif days_left == 1:
+                notifications.append({
+                    "type": "assignment",
+                    "priority": "high",
+                    "icon": "🔴",
+                    "title": "Assignment due tomorrow",
+                    "message": f"{title} ({subject}) is due tomorrow.",
+                    "date": deadline
+                })
+            elif days_left <= 3:
+                notifications.append({
+                    "type": "assignment",
+                    "priority": "medium",
+                    "icon": "🟡",
+                    "title": "Upcoming assignment",
+                    "message": f"{title} ({subject}) is due in {days_left} days.",
+                    "date": deadline
+                })
 
-        assignment_id = item[0]
-        subject = item[1]
-        title = item[2]
-        deadline = item[3]
-        status = item[4]
+        # ==========================================
+        # PENDING TASKS
+        # ==========================================
 
-        try:
-            deadline_date = datetime.strptime(
-                deadline,
-                "%Y-%m-%d"
-            ).date()
+        cursor.execute("""
+            SELECT id, task, status
+            FROM tasks
+            WHERE status != 'Completed'
+        """)
 
-        except (ValueError, TypeError):
-            continue
+        tasks = cursor.fetchall()
 
-        days_left = (deadline_date - today).days
-
-        if days_left < 0:
+        for item in tasks:
+            task_id = item[0]
+            task = item[1]
 
             notifications.append({
-                "type": "assignment",
-                "priority": "high",
-                "icon": "🔴",
-                "title": "Assignment overdue",
-                "message": f"{title} ({subject}) is overdue.",
-                "date": deadline
+                "type": "task",
+                "priority": "low",
+                "icon": "🟢",
+                "title": "Pending task",
+                "message": task,
+                "date": None
             })
 
-        elif days_left == 0:
+        # ==========================================
+        # REMINDERS
+        # ==========================================
+
+        cursor.execute("""
+            SELECT id, reminder, reminder_time, completed
+            FROM reminders
+            WHERE completed = 0
+        """)
+
+        reminders = cursor.fetchall()
+
+        for item in reminders:
+            reminder_id = item[0]
+            reminder = item[1]
+            reminder_time = item[2]
 
             notifications.append({
-                "type": "assignment",
-                "priority": "high",
-                "icon": "🔴",
-                "title": "Assignment due today",
-                "message": f"{title} ({subject}) is due today.",
-                "date": deadline
-            })
-
-        elif days_left == 1:
-
-            notifications.append({
-                "type": "assignment",
-                "priority": "high",
-                "icon": "🔴",
-                "title": "Assignment due tomorrow",
-                "message": f"{title} ({subject}) is due tomorrow.",
-                "date": deadline
-            })
-
-        elif days_left <= 3:
-
-            notifications.append({
-                "type": "assignment",
+                "type": "reminder",
                 "priority": "medium",
-                "icon": "🟡",
-                "title": "Upcoming assignment",
-                "message": f"{title} ({subject}) is due in {days_left} days.",
-                "date": deadline
+                "icon": "🔔",
+                "title": "Reminder",
+                "message": reminder,
+                "date": reminder_time
             })
-
-
-    # ==========================================
-    # PENDING TASKS
-    # ==========================================
-
-    cursor.execute("""
-        SELECT id, task, status
-        FROM tasks
-        WHERE status != 'Completed'
-    """)
-
-    tasks = cursor.fetchall()
-
-    for item in tasks:
-
-        task_id = item[0]
-        task = item[1]
-
-        notifications.append({
-            "type": "task",
-            "priority": "low",
-            "icon": "🟢",
-            "title": "Pending task",
-            "message": task,
-            "date": None
-        })
-
-
-    # ==========================================
-    # CALENDAR EVENTS (via Google Calendar API — see end of function)
-    # ==========================================
-
-
-    # ==========================================
-    # REMINDERS
-    # ==========================================
-
-    cursor.execute("""
-        SELECT id, reminder, reminder_time, completed
-        FROM reminders
-        WHERE completed = 0
-    """)
-
-    reminders = cursor.fetchall()
-
-    for item in reminders:
-
-        reminder_id = item[0]
-        reminder = item[1]
-        reminder_time = item[2]
-
-        notifications.append({
-            "type": "reminder",
-            "priority": "medium",
-            "icon": "🔔",
-            "title": "Reminder",
-            "message": reminder,
-            "date": reminder_time
-        })
 
     finally:
         conn.close()
@@ -192,10 +169,7 @@ def get_notifications():
     }
 
     notifications.sort(
-        key=lambda x: priority_order.get(
-            x["priority"],
-            3
-        )
+        key=lambda x: priority_order.get(x["priority"], 3)
     )
 
     return notifications

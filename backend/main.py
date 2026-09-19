@@ -424,7 +424,7 @@ def ask(question: str):
 async def upload_document(file: UploadFile = File(...)):
 
     os.makedirs("backend/uploads", exist_ok=True)
-    
+
     safe_filename = os.path.basename(file.filename)
     file_path = f"backend/uploads/{safe_filename}"
 

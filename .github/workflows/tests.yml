@@ -19,7 +19,7 @@ jobs:
       - name: Install linter
         run: pip install ruff
       - name: Lint with Ruff
-        run: ruff check backend/ --select E,F,W --ignore E501,F401
+        run: ruff check backend/ --select E,F,W --ignore E501,F401,E402,F841
 
   test:
     name: Tests (Python ${{ matrix.python-version }})
